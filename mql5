@@ -1,0 +1,163 @@
+
+//+------------------------------------------------------------------+
+//|                                           Psychological Oscillator MT5|
+//|                                 Copyright © 2022 forexroboteasy.com |
+//|                                      Developed by Forex Robot Easy Team|
+//+------------------------------------------------------------------+
+
+#property copyright 'Copyright © 2022 forexroboteasy.com'
+#property link      'https://www.forexroboteasy.com'
+#property version   '1.00'
+#property strict
+
+//+------------------------------------------------------------------+
+//| Custom Indicator Inputs                                          |
+//+------------------------------------------------------------------+
+input int period    = 14;   // Period for calculating Psychological Oscillator
+input int overboughtLevel = 80;   // Overbought level
+input int oversoldLevel   = 20;   // Oversold level
+
+//+------------------------------------------------------------------+
+//| Indicator buffers                                                |
+//+------------------------------------------------------------------+
+double HistogramBuffer[];   // Buffer for storing the histogram values
+double ZoneBuffer[];        // Buffer for storing the zone values
+
+//+------------------------------------------------------------------+
+//| Custom Indicator Initialization Function                        |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    IndicatorBuffers(2);
+    
+    SetIndexBuffer(0, HistogramBuffer, INDICATOR_DATA);
+    SetIndexBuffer(1, ZoneBuffer, INDICATOR_CALCULATIONS);
+    
+    SetIndexStyle(0, DRAW_HISTOGRAM);
+    SetIndexStyle(1, DRAW_LINE);
+    
+    SetIndexLabel(0, 'Psychological Oscillator');
+    SetIndexLabel(1, 'Zones');
+    
+    SetIndexDrawBegin(0, period);
+    SetIndexDrawBegin(1, period);
+    
+    return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Custom Indicator Calculation Function                            |
+//+------------------------------------------------------------------+
+int OnCalculate(const int rates_total,
+                const int prev_calculated,
+                const datetime &time[],
+                const double &open[],
+                const double &high[],
+                const double &low[],
+                const double &close[],
+                const long &tick_volume[],
+                const long &volume[],
+                const int &spread[])
+{
+    int limit = rates_total - prev_calculated;
+    
+    for (int i = 0; i < limit; i++)
+    {
+        // Calculate Psychological Oscillator
+        double bullishCount = 0;
+        double bearishCount = 0;
+        
+        for (int j = i; j < i + period; j++)
+        {
+            if (close[j] > open[j])
+                bullishCount++;
+            else if (close[j] < open[j])
+                bearishCount++;
+        }
+        
+        double oscillatorValue = (bullishCount / period) * 100;
+        
+        HistogramBuffer[i] = oscillatorValue;
+        
+        // Generate Colour Histogram
+        if (oscillatorValue > overboughtLevel)
+            HistogramBuffer[i] = overboughtLevel;
+        else if (oscillatorValue < oversoldLevel)
+            HistogramBuffer[i] = oversoldLevel;
+        
+        // Integrate Zones
+        if (oscillatorValue > overboughtLevel)
+            ZoneBuffer[i] = 2;
+        else if (oscillatorValue < oversoldLevel)
+            ZoneBuffer[i] = 0;
+        else
+            ZoneBuffer[i] = 1;
+    }
+    
+    return(rates_total);
+}
+
+//+------------------------------------------------------------------+
+//| Custom Indicator Deinitialization Function                      |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+    // Clean up resources if necessary
+}
+
+//+------------------------------------------------------------------+
+//| Custom Indicator Inbuilt Notification Function                   |
+//+------------------------------------------------------------------+
+void SendNotification(const string message)
+{
+    // Implement your notification system here
+    Print('Notification: ', message);
+}
+
+//+------------------------------------------------------------------+
+//| Custom Indicator Usage Example                                   |
+//+------------------------------------------------------------------+
+void ExampleUsage()
+{
+    // Calculate Psychological Oscillator
+    double oscillator = iCustom(NULL, 0, 'Psychological Oscillator MT5', period, overboughtLevel, oversoldLevel, 0, 0);
+    
+    // Generate Colour Histogram
+    if (oscillator > overboughtLevel)
+        Print('Bullish');
+    else if (oscillator < oversoldLevel)
+        Print('Bearish');
+    else
+        Print('Neutral');
+    
+    // Integrate Zones
+    if (oscillator > overboughtLevel)
+        Print('Overbought');
+    else if (oscillator < oversoldLevel)
+        Print('Oversold');
+    else
+        Print('Normal');
+    
+    // Trend Indicator Integration
+    // Add your code here to integrate the Psychological Oscillator with trend indicators
+    
+    // Inbuilt Notification System
+    SendNotification('Psychological Oscillator: ' + DoubleToString(oscillator, 2));
+}
+
+//+------------------------------------------------------------------+
+//| Custom Indicator Test Function                                   |
+//+------------------------------------------------------------------+
+void TestIndicator()
+{
+    // Add your test cases here to validate the correctness of the indicator
+}
+
+//+------------------------------------------------------------------+
+//| Custom Indicator Execution Entry Point                           |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+    ExampleUsage();
+}
+
